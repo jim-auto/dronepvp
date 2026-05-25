@@ -4,6 +4,7 @@ import { InputController } from './game/InputController';
 import { Hud } from './hud/Hud';
 import { DroneRenderer } from './rendering/DroneRenderer';
 import { getNetworkUrl, NetworkClient } from './network/NetworkClient';
+import { AudioDirector } from './audio/AudioDirector';
 
 const canvas = document.querySelector<HTMLCanvasElement>('#game');
 const hudRoot = document.querySelector<HTMLDivElement>('#hud');
@@ -18,6 +19,7 @@ const world = new GameWorld();
 const renderer = new DroneRenderer(canvas, world);
 const hud = new Hud(hudRoot);
 const network = new NetworkClient(getNetworkUrl());
+const audio = new AudioDirector();
 const startOverlay = startScreen;
 let started = false;
 
@@ -25,6 +27,7 @@ function startGame() {
   started = true;
   lastTime = performance.now();
   startOverlay.classList.add('hidden');
+  void audio.resume();
   input.requestPointerLock();
 }
 
@@ -52,6 +55,7 @@ function frame(now: number) {
   }
   const events = [...world.drainEvents(), ...network.drainCombatEvents()];
   hud.pushEvents(events);
+  audio.pushEvents(events);
   renderer.render(dt, snapshot, events);
   const hudState = world.getHudState(snapshot, network.getStatusLabel(), network.getScoreboardLabel());
   const pvpRoundStatus = network.getRoundStatusLabel();
@@ -67,6 +71,7 @@ function frame(now: number) {
   } else if (pvpRoundStatus) {
     hudState.roundPhase = 'playing';
   }
+  audio.update(hudState, snapshot);
   hud.render(hudState, renderer.getTargetMarker(), dt);
 
   requestAnimationFrame(frame);

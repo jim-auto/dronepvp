@@ -113,6 +113,8 @@ Mouse sensitivity is saved in `localStorage`.
 - Building and projectile collision
 - HP, respawn, target marker, score, threat, and round HUD
 - Damage smoke, hit flashes, explosions, screen flashes, and combat feed
+- Procedural WebAudio SFX for lasers, missiles, impacts, explosions, pickups, combos, and warnings
+- HUD punch animations for kill feed and incoming missile alerts
 - Result panel and automatic round restart
 - Optional WebSocket position sync for remote players
 - Client-side interpolation for remote players and PvP projectiles
