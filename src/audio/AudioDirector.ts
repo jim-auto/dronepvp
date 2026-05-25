@@ -2,10 +2,21 @@ import type { CombatEvent, HudState, InputSnapshot } from '../game/types';
 
 type OscillatorShape = OscillatorType;
 
+const VOLUME_KEY = 'dronepvp.audioVolume';
+const MUTED_KEY = 'dronepvp.audioMuted';
+const DEFAULT_VOLUME = 0.72;
+
+export type AudioSettings = {
+  volume: number;
+  muted: boolean;
+};
+
 export class AudioDirector {
   private context?: AudioContext;
   private master?: GainNode;
   private noiseBuffer?: AudioBuffer;
+  private volume = readVolume();
+  private muted = readMuted();
   private lastMissileStatus = '';
   private lastIncoming = '';
   private lastBoostPulseAt = 0;
@@ -16,6 +27,29 @@ export class AudioDirector {
     if (!context) return;
     if (context.state === 'suspended') await context.resume();
     this.playStartup();
+  }
+
+  getSettings(): AudioSettings {
+    return {
+      volume: this.volume,
+      muted: this.muted,
+    };
+  }
+
+  setVolume(volume: number) {
+    this.volume = clamp(volume, 0, 1);
+    localStorage.setItem(VOLUME_KEY, this.volume.toFixed(2));
+    this.applyMasterGain();
+  }
+
+  setMuted(muted: boolean) {
+    this.muted = muted;
+    localStorage.setItem(MUTED_KEY, muted ? '1' : '0');
+    this.applyMasterGain();
+  }
+
+  toggleMuted() {
+    this.setMuted(!this.muted);
   }
 
   pushEvents(events: CombatEvent[]) {
@@ -60,13 +94,25 @@ export class AudioDirector {
 
     const context = new AudioContext({ latencyHint: 'interactive' });
     const master = context.createGain();
-    master.gain.value = 0.42;
+    master.gain.value = this.getOutputGain();
     master.connect(context.destination);
 
     this.context = context;
     this.master = master;
     this.noiseBuffer = createNoiseBuffer(context);
     return context;
+  }
+
+  private applyMasterGain() {
+    const context = this.context;
+    const master = this.master;
+    if (!context || !master) return;
+    master.gain.cancelScheduledValues(context.currentTime);
+    master.gain.linearRampToValueAtTime(this.getOutputGain(), context.currentTime + 0.05);
+  }
+
+  private getOutputGain(): number {
+    return this.muted ? 0 : this.volume * 0.58;
   }
 
   private isLive(): boolean {
@@ -234,4 +280,17 @@ function createNoiseBuffer(context: AudioContext): AudioBuffer {
   }
 
   return buffer;
+}
+
+function readVolume(): number {
+  const stored = Number(localStorage.getItem(VOLUME_KEY));
+  return Number.isFinite(stored) ? clamp(stored, 0, 1) : DEFAULT_VOLUME;
+}
+
+function readMuted(): boolean {
+  return localStorage.getItem(MUTED_KEY) === '1';
+}
+
+function clamp(value: number, min: number, max: number): number {
+  return Math.max(min, Math.min(max, value));
 }

@@ -5,12 +5,14 @@ import { Hud } from './hud/Hud';
 import { DroneRenderer } from './rendering/DroneRenderer';
 import { getNetworkUrl, NetworkClient } from './network/NetworkClient';
 import { AudioDirector } from './audio/AudioDirector';
+import { AudioSettingsPanel } from './audio/AudioSettingsPanel';
 
 const canvas = document.querySelector<HTMLCanvasElement>('#game');
 const hudRoot = document.querySelector<HTMLDivElement>('#hud');
 const startScreen = document.querySelector<HTMLDivElement>('#start-screen');
+const audioSettingsRoot = document.querySelector<HTMLDivElement>('#audio-settings');
 
-if (!canvas || !hudRoot || !startScreen) {
+if (!canvas || !hudRoot || !startScreen || !audioSettingsRoot) {
   throw new Error('DronePvP boot failed: missing DOM mount points.');
 }
 
@@ -20,6 +22,7 @@ const renderer = new DroneRenderer(canvas, world);
 const hud = new Hud(hudRoot);
 const network = new NetworkClient(getNetworkUrl());
 const audio = new AudioDirector();
+const audioSettings = new AudioSettingsPanel(audioSettingsRoot, audio);
 const startOverlay = startScreen;
 let started = false;
 
@@ -43,6 +46,7 @@ function frame(now: number) {
   lastTime = now;
 
   const snapshot = input.consumeFrame();
+  audioSettings.setVisible(!snapshot.locked);
   if (started) {
     world.update(dt, snapshot);
     for (const action of world.drainNetworkActions()) {

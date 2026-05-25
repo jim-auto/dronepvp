@@ -82,11 +82,13 @@ npm run preview
 - Shift: boost
 - Left click: laser
 - Right click: lock-on missile
+- M: mute / unmute audio
+- `-` / `+`: lower / raise audio volume
 - Esc: release pointer lock
 - Click canvas: resume controls
 - `[` / `]`: lower / raise mouse sensitivity
 
-Mouse sensitivity is saved in `localStorage`.
+Mouse sensitivity and audio settings are saved in `localStorage`.
 
 ## Game Rules
 
@@ -114,6 +116,7 @@ Mouse sensitivity is saved in `localStorage`.
 - HP, respawn, target marker, score, threat, and round HUD
 - Damage smoke, hit flashes, explosions, screen flashes, and combat feed
 - Procedural WebAudio SFX for lasers, missiles, impacts, explosions, pickups, combos, and warnings
+- Persistent mute and volume controls
 - HUD punch animations for kill feed and incoming missile alerts
 - Result panel and automatic round restart
 - Optional WebSocket position sync for remote players

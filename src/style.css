@@ -24,6 +24,68 @@ body,
   pointer-events: none;
 }
 
+.audio-settings {
+  position: fixed;
+  right: 18px;
+  top: 18px;
+  z-index: 5;
+  display: grid;
+  grid-template-columns: 76px minmax(120px, 170px) 42px;
+  align-items: center;
+  gap: 8px;
+  padding: 9px;
+  border: 1px solid rgba(92, 246, 255, 0.24);
+  border-radius: 8px;
+  background: rgba(4, 10, 18, 0.72);
+  box-shadow:
+    0 0 22px rgba(92, 246, 255, 0.14),
+    inset 0 0 18px rgba(92, 246, 255, 0.06);
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(-8px);
+  transition:
+    opacity 120ms ease,
+    transform 120ms ease;
+}
+
+.audio-settings.visible {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateY(0);
+}
+
+.audio-settings button {
+  min-width: 0;
+  height: 30px;
+  border: 1px solid rgba(124, 255, 178, 0.38);
+  border-radius: 6px;
+  background: rgba(124, 255, 178, 0.1);
+  color: rgba(124, 255, 178, 0.94);
+  font: inherit;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0;
+  cursor: pointer;
+}
+
+.audio-settings.muted button {
+  border-color: rgba(255, 63, 143, 0.42);
+  background: rgba(255, 63, 143, 0.12);
+  color: rgba(255, 170, 204, 0.94);
+}
+
+.audio-settings input {
+  width: 100%;
+  accent-color: #52f7ff;
+}
+
+.audio-settings span {
+  color: rgba(237, 247, 255, 0.82);
+  font-size: 12px;
+  text-align: right;
+  text-shadow: 0 0 10px rgba(35, 222, 255, 0.36);
+}
+
 .reticle {
   position: absolute;
   left: 50%;
@@ -444,6 +506,7 @@ body,
 #start-screen {
   position: fixed;
   inset: 0;
+  z-index: 3;
   display: grid;
   place-items: center;
   background:
