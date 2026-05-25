@@ -6,6 +6,7 @@ export type Drone = {
   id: DroneId;
   name: string;
   team: 'player' | 'enemy' | 'remote';
+  variant: 'grunt' | 'ace';
   position: Vec3;
   velocity: Vec3;
   targetPosition?: Vec3;
@@ -22,6 +23,7 @@ export type Drone = {
   laserCooldown: number;
   missileCooldown: number;
   missileLock: number;
+  overdriveTimer: number;
   score: number;
   hitFlash: number;
   aiPhase: number;
@@ -41,6 +43,17 @@ export type Projectile = {
   ttl: number;
   targetId?: DroneId;
   isRemote?: boolean;
+};
+
+export type PowerUpKind = 'repair' | 'overdrive' | 'missile';
+
+export type PowerUp = {
+  id: string;
+  kind: PowerUpKind;
+  position: Vec3;
+  radius: number;
+  respawnTimer: number;
+  spin: number;
 };
 
 export type Building = {
@@ -79,6 +92,9 @@ export type HudState = {
   roundResultSummary: string;
   threatLevel: number;
   threatLabel: string;
+  comboLabel: string;
+  perkLabel: string;
+  incomingWarning: string;
   networkStatus: string;
   networkScoreboard: string;
   missileCooldownRatio: number;
@@ -103,7 +119,7 @@ export type TargetMarker = {
 
 export type CombatEvent = {
   id: string;
-  kind: 'hit' | 'explosion' | 'spark' | 'launch' | 'muzzle' | 'smoke';
+  kind: 'hit' | 'explosion' | 'spark' | 'launch' | 'muzzle' | 'smoke' | 'pickup';
   position: Vec3;
   color: number;
   scale: number;

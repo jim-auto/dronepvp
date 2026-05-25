@@ -2,7 +2,7 @@
 
 Browser-based 3D drone combat game built with Vite, TypeScript, and Three.js.
 
-DronePvP is a fast arcade dogfighting prototype set in a neon low-poly city arena. It currently runs as a single-player PvP-style combat arena with enemy dummy drones, lock-on missiles, scoring, rounds, and GitHub Pages deployment support.
+DronePvP is a fast arcade dogfighting prototype set in a neon low-poly city arena. It currently runs as a single-player PvP-style combat arena with enemy drones, collectible combat cores, lock-on missiles, combo scoring, rounds, an ace interceptor phase, and GitHub Pages deployment support.
 
 ## Play Locally
 
@@ -93,6 +93,9 @@ Mouse sensitivity is saved in `localStorage`.
 - Score 10 kills to win the round.
 - Losing 5 hulls causes defeat.
 - Round duration is 3 minutes.
+- Chain kills within the combo window to earn boost and missile cooldown rewards.
+- Fly through cores to repair, trigger overdrive, or reload missiles.
+- The ace interceptor deploys once you build momentum and is worth 2 kills.
 - Rounds restart automatically after the result countdown.
 - Threat level rises as time passes, score increases, and hulls are lost.
 
@@ -102,7 +105,10 @@ Mouse sensitivity is saved in `localStorage`.
 - Boost with speed-line and FOV effects
 - Laser shooting with muzzle flashes
 - Lock-on missiles with charge and reload HUD
-- Enemy dummy drones with orbiting, evasion, and obstacle avoidance
+- Enemy drones with orbiting, evasion, and obstacle avoidance
+- Mid-round ace interceptor with stronger hull, faster movement, and homing missiles
+- Collectible repair, overdrive, and missile cores
+- Combo streak rewards for fast consecutive kills
 - Low-poly cyberpunk city arena
 - Building and projectile collision
 - HP, respawn, target marker, score, threat, and round HUD
@@ -126,10 +132,14 @@ Useful values to tune:
 - `roundDuration`
 - `scoreGoal`
 - `deathLimit`
+- `comboWindow`
 - `player.maxSpeed`
 - `player.boostSpeed`
+- `player.overdriveDuration`
 - `enemy.baseMaxSpeed`
 - `enemy.baseFireCooldown`
+- `ace.spawnAtScore`
+- `powerUps.respawnDelay`
 - `weapons.laserDamage`
 - `weapons.missileDamage`
 

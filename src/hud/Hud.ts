@@ -28,8 +28,11 @@ export class Hud {
   private readonly roundScore: HTMLDivElement;
   private readonly roundDeaths: HTMLDivElement;
   private readonly threat: HTMLDivElement;
+  private readonly combo: HTMLDivElement;
+  private readonly perk: HTMLDivElement;
   private readonly network: HTMLDivElement;
   private readonly networkScoreboard: HTMLDivElement;
+  private readonly incomingWarning: HTMLDivElement;
   private readonly screenFlash: HTMLDivElement;
   private readonly result: HTMLDivElement;
   private readonly resultTitle: HTMLDivElement;
@@ -58,11 +61,14 @@ export class Hud {
         <div data-round-score></div>
         <div data-round-deaths></div>
         <div data-threat></div>
+        <div data-combo></div>
+        <div data-perk></div>
         <div data-network></div>
         <div data-network-scoreboard></div>
       </div>
       <div class="event-feed" data-feed></div>
       <div class="respawn-warning" data-respawn-warning></div>
+      <div class="incoming-warning" data-incoming-warning></div>
       <div class="screen-flash" data-screen-flash></div>
       <div class="result-panel" data-result>
         <div data-result-title></div>
@@ -117,8 +123,11 @@ export class Hud {
     this.roundScore = this.query('[data-round-score]');
     this.roundDeaths = this.query('[data-round-deaths]');
     this.threat = this.query('[data-threat]');
+    this.combo = this.query('[data-combo]');
+    this.perk = this.query('[data-perk]');
     this.network = this.query('[data-network]');
     this.networkScoreboard = this.query('[data-network-scoreboard]');
+    this.incomingWarning = this.query('[data-incoming-warning]');
     this.screenFlash = this.query('[data-screen-flash]');
     this.result = this.query('[data-result]');
     this.resultTitle = this.query('[data-result-title]');
@@ -166,6 +175,8 @@ export class Hud {
     this.roundDeaths.textContent = `hulls ${state.deathLimit - state.playerDeaths}/${state.deathLimit}`;
     this.threat.textContent = state.threatLabel;
     this.threat.style.opacity = `${0.62 + state.threatLevel * 0.38}`;
+    this.combo.textContent = state.comboLabel;
+    this.perk.textContent = state.perkLabel;
     this.network.textContent = state.networkStatus;
     this.networkScoreboard.textContent = state.networkScoreboard;
     this.speed.textContent = `BOOST · ${Math.round(state.velocity)} m/s`;
@@ -177,6 +188,8 @@ export class Hud {
     this.pausePanel.classList.toggle('visible', !state.controlsLocked && state.roundPhase === 'playing');
     this.message.textContent = state.message;
     this.respawnWarning.textContent = state.respawnWarning;
+    this.incomingWarning.textContent = state.incomingWarning;
+    this.incomingWarning.classList.toggle('visible', state.incomingWarning.length > 0);
     this.renderScreenFlash(dt);
     this.renderFeed(dt);
     this.renderResult(state);

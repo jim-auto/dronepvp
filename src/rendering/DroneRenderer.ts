@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import type { GameWorld } from '../game/GameWorld';
 import { distance, forwardFromAngles, length, type Vec3 } from '../game/math';
-import type { CombatEvent, Drone, InputSnapshot, Projectile, TargetMarker } from '../game/types';
+import type { CombatEvent, Drone, InputSnapshot, PowerUp, Projectile, TargetMarker } from '../game/types';
 
 type Effect = {
   object: THREE.Object3D;
@@ -18,6 +18,7 @@ export class DroneRenderer {
   private readonly camera = new THREE.PerspectiveCamera(72, 1, 0.1, 900);
   private readonly droneMeshes = new Map<string, THREE.Object3D>();
   private readonly projectileMeshes = new Map<string, THREE.Object3D>();
+  private readonly powerUpMeshes = new Map<string, THREE.Object3D>();
   private readonly speedLines = new THREE.Group();
   private readonly clockOffset = Math.random() * 1000;
   private readonly effects: Effect[] = [];
@@ -44,6 +45,7 @@ export class DroneRenderer {
   render(dt: number, input: InputSnapshot, events: CombatEvent[]) {
     this.syncDrones(dt);
     this.syncProjectiles();
+    this.syncPowerUps(dt);
     this.spawnCombatEffects(events);
     this.updateEffects(dt);
     this.updateCamera(dt, input);
@@ -142,6 +144,8 @@ export class DroneRenderer {
   }
 
   private syncDrones(dt: number) {
+    const activeIds = new Set(this.world.drones.map((drone) => drone.id));
+
     for (const drone of this.world.drones) {
       let mesh = this.droneMeshes.get(drone.id);
       if (!mesh) {
@@ -154,6 +158,14 @@ export class DroneRenderer {
       mesh.rotation.set(-drone.pitch, drone.yaw, 0);
       applyDroneHitFlash(mesh, drone.hitFlash);
       this.updateDamageSmoke(drone, dt);
+    }
+
+    for (const [id, mesh] of this.droneMeshes) {
+      if (!activeIds.has(id)) {
+        this.scene.remove(mesh);
+        this.droneMeshes.delete(id);
+        this.damageSmokeTimers.delete(id);
+      }
     }
   }
 
@@ -207,6 +219,33 @@ export class DroneRenderer {
       if (!activeIds.has(id)) {
         this.scene.remove(mesh);
         this.projectileMeshes.delete(id);
+      }
+    }
+  }
+
+  private syncPowerUps(dt: number) {
+    const activeIds = new Set(this.world.powerUps.map((powerUp) => powerUp.id));
+
+    for (const powerUp of this.world.powerUps) {
+      let mesh = this.powerUpMeshes.get(powerUp.id);
+      if (!mesh) {
+        mesh = createPowerUpMesh(powerUp);
+        this.powerUpMeshes.set(powerUp.id, mesh);
+        this.scene.add(mesh);
+      }
+
+      mesh.visible = powerUp.respawnTimer <= 0;
+      mesh.position.copy(toThree(powerUp.position));
+      mesh.rotation.y += dt * 1.7;
+      mesh.rotation.z = Math.sin(powerUp.spin * 1.8) * 0.28;
+      const pulse = 1 + Math.sin(powerUp.spin * 4) * 0.07;
+      mesh.scale.setScalar(pulse);
+    }
+
+    for (const [id, mesh] of this.powerUpMeshes) {
+      if (!activeIds.has(id)) {
+        this.scene.remove(mesh);
+        this.powerUpMeshes.delete(id);
       }
     }
   }
@@ -304,22 +343,32 @@ export class DroneRenderer {
 
 function createDroneMesh(drone: Drone): THREE.Object3D {
   const group = new THREE.Group();
-  const color = drone.team === 'player' ? 0x52f7ff : drone.team === 'remote' ? 0x7cffb2 : 0xff3f8f;
+  const isAce = drone.variant === 'ace';
+  const color = drone.team === 'player' ? 0x52f7ff : drone.team === 'remote' ? 0x7cffb2 : isAce ? 0xffd166 : 0xff3f8f;
   const body = new THREE.Mesh(
-    new THREE.ConeGeometry(1.25, 4.4, 4),
-    new THREE.MeshStandardMaterial({ color, roughness: 0.35, metalness: 0.65, emissive: color, emissiveIntensity: 0.18 }),
+    new THREE.ConeGeometry(isAce ? 1.65 : 1.25, isAce ? 5.4 : 4.4, isAce ? 5 : 4),
+    new THREE.MeshStandardMaterial({ color, roughness: 0.35, metalness: 0.65, emissive: color, emissiveIntensity: isAce ? 0.32 : 0.18 }),
   );
   body.rotation.x = Math.PI / 2;
-  body.userData.baseEmissive = 0.18;
+  body.userData.baseEmissive = isAce ? 0.32 : 0.18;
   group.add(body);
 
-  const wingGeometry = new THREE.BoxGeometry(5.6, 0.18, 0.65);
+  const wingGeometry = new THREE.BoxGeometry(isAce ? 7.4 : 5.6, isAce ? 0.24 : 0.18, isAce ? 0.82 : 0.65);
   const wingMaterial = new THREE.MeshStandardMaterial({ color: 0xdffbff, roughness: 0.4, metalness: 0.45, emissive: color, emissiveIntensity: 0.12 });
   const wing = new THREE.Mesh(wingGeometry, wingMaterial);
   wing.userData.baseEmissive = 0.12;
   group.add(wing);
 
-  const glow = new THREE.PointLight(color, 1.6, 18);
+  if (isAce) {
+    const crown = new THREE.Mesh(
+      new THREE.TorusGeometry(2.7, 0.08, 6, 28),
+      new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.82, blending: THREE.AdditiveBlending }),
+    );
+    crown.rotation.x = Math.PI / 2;
+    group.add(crown);
+  }
+
+  const glow = new THREE.PointLight(color, isAce ? 2.6 : 1.6, isAce ? 28 : 18);
   glow.position.set(0, 0, -1.2);
   group.add(glow);
 
@@ -345,6 +394,39 @@ function createProjectileMesh(projectile: Projectile): THREE.Object3D {
   mesh.rotation.x = Math.PI / 2;
   const light = new THREE.PointLight(color, 1.7, 15);
   group.add(mesh, light);
+  return group;
+}
+
+function createPowerUpMesh(powerUp: PowerUp): THREE.Object3D {
+  const group = new THREE.Group();
+  const color = powerUp.kind === 'repair' ? 0x7cffb2 : powerUp.kind === 'overdrive' ? 0x52f7ff : 0xffd166;
+  const material = new THREE.MeshBasicMaterial({
+    color,
+    transparent: true,
+    opacity: 0.88,
+    blending: THREE.AdditiveBlending,
+    depthWrite: false,
+  });
+
+  const core = new THREE.Mesh(new THREE.IcosahedronGeometry(powerUp.radius * 0.42, 1), material.clone());
+  group.add(core);
+
+  const ringA = new THREE.Mesh(new THREE.TorusGeometry(powerUp.radius * 0.72, 0.045 * powerUp.radius, 6, 32), material.clone());
+  ringA.rotation.x = Math.PI / 2;
+  group.add(ringA);
+
+  const ringB = new THREE.Mesh(new THREE.TorusGeometry(powerUp.radius * 0.52, 0.035 * powerUp.radius, 6, 28), material.clone());
+  ringB.rotation.y = Math.PI / 2;
+  group.add(ringB);
+
+  const beacon = new THREE.Mesh(
+    new THREE.CylinderGeometry(powerUp.radius * 0.1, powerUp.radius * 0.34, 16, 12, 1, true),
+    new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.16, blending: THREE.AdditiveBlending, depthWrite: false }),
+  );
+  beacon.position.y = -7;
+  group.add(beacon);
+
+  group.add(new THREE.PointLight(color, 2.2, 36));
   return group;
 }
 
@@ -393,6 +475,15 @@ function createCombatEffect(event: CombatEvent): Effect {
     const flare = new THREE.Mesh(new THREE.RingGeometry(0.5 * event.scale, 2.1 * event.scale, 8), material.clone());
     flare.rotation.x = Math.PI / 2;
     group.add(flare);
+  } else if (event.kind === 'pickup') {
+    const core = new THREE.Mesh(new THREE.IcosahedronGeometry(0.85 * event.scale, 1), material.clone());
+    group.add(core);
+
+    for (let i = 0; i < 3; i += 1) {
+      const ring = new THREE.Mesh(new THREE.TorusGeometry((1.2 + i * 0.42) * event.scale, 0.04 * event.scale, 6, 28), material.clone());
+      ring.rotation.set(Math.PI / 2, Math.random() * Math.PI, Math.random() * Math.PI);
+      group.add(ring);
+    }
   } else if (event.kind === 'smoke') {
     const smokeMaterial = new THREE.MeshBasicMaterial({
       color,
@@ -433,6 +524,7 @@ function getEffectLife(kind: CombatEvent['kind']): number {
   if (kind === 'explosion') return 0.55;
   if (kind === 'launch') return 0.34;
   if (kind === 'muzzle') return 0.12;
+  if (kind === 'pickup') return 0.42;
   if (kind === 'smoke') return 0.72;
   return 0.22;
 }

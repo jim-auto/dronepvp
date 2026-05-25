@@ -156,6 +156,14 @@ body,
   font-weight: 700;
 }
 
+.round-panel [data-combo] {
+  color: rgba(255, 218, 122, 0.94);
+}
+
+.round-panel [data-perk] {
+  color: rgba(124, 255, 178, 0.92);
+}
+
 .round-panel div:last-child {
   color: rgba(255, 63, 143, 0.95);
 }
@@ -193,6 +201,25 @@ body,
   color: rgba(255, 63, 143, 0.9);
   font-size: 13px;
   text-shadow: 0 0 10px rgba(255, 63, 143, 0.55);
+}
+
+.incoming-warning {
+  position: absolute;
+  left: 50%;
+  top: 34%;
+  transform: translateX(-50%);
+  color: rgba(255, 90, 61, 0.95);
+  font-size: 18px;
+  font-weight: 800;
+  opacity: 0;
+  text-shadow:
+    0 0 12px rgba(255, 90, 61, 0.75),
+    0 0 24px rgba(255, 218, 122, 0.42);
+  transition: opacity 90ms linear;
+}
+
+.incoming-warning.visible {
+  opacity: 1;
 }
 
 .screen-flash {
